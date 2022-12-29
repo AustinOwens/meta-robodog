@@ -3,7 +3,7 @@ DESCRIPTION = "Baseline image recipe for the RoboDog OS"
 LICENSE = "LGPL-3.0-only"
 
 # Inherit from the the core-image-minimal-dev image
-inherit core-image
+require recipes-core/images/core-image-minimal-dev.bb
 
 # The poky/meta/classes-recipe/core-image.bbclass implements the mapping of strings in
 # the global variable IMAGE_FEATURES to predefined packagegroups. What IMAGE_FEATURES
@@ -11,7 +11,7 @@ inherit core-image
 # editing the file, and we can simply add pre-defined features to the global variable
 # IMAGE_FEATURES. This also allows us to create definitions of IMAGE_FEATURES that will
 # be applicable to all images that are derived from the core-image.bbclass.
-IMAGE_FEATURES += "splash ssh-server-dropbear package-management"
+IMAGE_FEATURES += "ssh-server-dropbear package-management"
 
 # Install additional software packages
 CORE_IMAGE_EXTRA_INSTALL += "robodog-packagegroup-testapps"
