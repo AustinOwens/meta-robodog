@@ -1,0 +1,30 @@
+--- a/lib/sw_apps/zynq_fsbl/src/Makefile	2023-01-08 05:22:14.271357868 +0000
++++ b/lib/sw_apps/zynq_fsbl/src/Makefile	2023-01-08 05:22:14.271357868 +0000
+
+
+
+@@ -9,6 +9,7 @@
+ CFLAGS := 
+ ECFLAGS := 
+ LDFLAGS := 
++DBGFLAGS:=
+ 
+ BOARD	:= zc702
+ BSP_DIR	:= ../misc
+@@ -30,6 +31,7 @@
+ INCLUDEPATH := -I$(BSP_DIR)/ps7_cortexa9_0/include -I. -I$(BSP_DIR)/$(BOARD)
+ LIBPATH := $(BSP_DIR)/ps7_cortexa9_0/lib
+ 
++DBGFLAGS = -DFSBL_DEBUG_INFO
+ 
+ ifeq "${CROSS_COMP}" "armclang"
+ AS=armasm
+@@ -49,6 +51,8 @@
+ ECFLAGS = -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard
+ endif
+ 
++CFLAGS+=$(DBGFLAGS)
++
+ all: $(EXEC)
+ 
+ $(EXEC): $(LIBS) $(OBJS) $(INCLUDES)
