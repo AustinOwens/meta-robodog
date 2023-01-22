@@ -1,0 +1,25 @@
+bootcmd=run bootkernel
+bootdelay=2
+baudrate=115200
+preboot=
+loadaddr=0x0
+arch=arm
+cpu=armv7
+board=zynq
+board_name=zynq
+vendor=xilinx
+soc=zynq
+machine_name=zybo-zynq7
+kernel_image=uImage
+kernel_load_address=0x2080000
+devicetree_image=zynq-zybo-z7.dtb
+devicetree_load_address=0x2000000
+bootargs=earlyprintk console=ttyPS0,115200 root=/dev/mmcblk0p2 rw rootwait
+loadkernel=fatload mmc 0 ${kernel_load_address} ${kernel_image}
+loaddtb=fatload mmc 0 ${devicetree_load_address} ${devicetree_image}
+bootkernel=run loadkernel && run loaddtb && bootm ${kernel_load_address} - ${devicetree_load_address}
+uenvcmd=run bootkernel
+bitstream_image=boot.bin
+bitstream_load_address=0x100000
+bitstream_type=load
+loadfpga=fatload mmc 0 ${bitstream_load_address} ${bitstream_image} && fpga ${bitstream_type} 0 ${bitstream_load_address} ${filesize}

@@ -1,0 +1,13 @@
+diff --git a/configs/xilinx_zynq_virt_defconfig b/configs/xilinx_zynq_virt_defconfig
+index 611c5e993c..14430ed28f 100644
+--- a/configs/xilinx_zynq_virt_defconfig
++++ b/configs/xilinx_zynq_virt_defconfig
+@@ -6,7 +6,7 @@ CONFIG_SYS_MEMTEST_START=0x00000000
+ CONFIG_SYS_MEMTEST_END=0x00001000
+ CONFIG_ENV_OFFSET=0xE00000
+ CONFIG_DM_GPIO=y
+-CONFIG_DEFAULT_DEVICE_TREE="zynq-zc706"
++CONFIG_DEFAULT_DEVICE_TREE="zynq-zybo-z7"
+ CONFIG_SPL_STACK_R_ADDR=0x200000
+ CONFIG_SPL=y
+ CONFIG_ENV_OFFSET_REDUND=0xE40000
