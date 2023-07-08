@@ -11,10 +11,22 @@ require recipes-core/images/core-image-minimal-dev.bb
 # editing the file, and we can simply add pre-defined features to the global variable
 # IMAGE_FEATURES. This also allows us to create definitions of IMAGE_FEATURES that will
 # be applicable to all images that are derived from the core-image.bbclass.
-IMAGE_FEATURES += "ssh-server-dropbear package-management"
+IMAGE_FEATURES += "ssh-server-dropbear"
+IMAGE_FEATURES += "package-management"
 
-# Install additional software packages
-CORE_IMAGE_EXTRA_INSTALL += "robodog-packagegroup-testapps"
+# Add a package feed URI for the package-management IMAGE_FEATURE
+PACKAGE_CLASSES = "package_rpm"
+PACKAGE_FEED_URIS = "http://127.0.0.1/zybo-z7/yocto_pkg_repo/rpm"
+
+# Packages to install
+IMAGE_INSTALL:append = " gcc"
+IMAGE_INSTALL:append = " devmem2"
+IMAGE_INSTALL:append = " memtester"
+IMAGE_INSTALL:append = " ethtool"
+IMAGE_INSTALL:append = " i2c-tools"
+IMAGE_INSTALL:append = " spidev-test"
+IMAGE_INSTALL:append = " spitools"
+
 
 # Banner output
 python do_display_banner() {
