@@ -26,6 +26,12 @@ IMAGE_INSTALL:append = " ethtool"
 IMAGE_INSTALL:append = " i2c-tools"
 IMAGE_INSTALL:append = " spidev-test"
 IMAGE_INSTALL:append = " spitools"
+IMAGE_INSTALL:append = " usbutils"
+IMAGE_INSTALL:append = " v4l-utils"
+IMAGE_INSTALL:append = " opencv"
+
+# Custom apps to install
+IMAGE_INSTALL:append = " machine-vision-server"
 
 
 # Banner output
