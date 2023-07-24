@@ -29,6 +29,7 @@ IMAGE_INSTALL:append = " spitools"
 IMAGE_INSTALL:append = " usbutils"
 IMAGE_INSTALL:append = " v4l-utils"
 IMAGE_INSTALL:append = " opencv"
+IMAGE_INSTALL:append = " pip-odrive"
 
 # Custom apps to install
 IMAGE_INSTALL:append = " machine-vision-server"
