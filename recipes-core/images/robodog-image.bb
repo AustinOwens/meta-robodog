@@ -19,13 +19,15 @@ PACKAGE_CLASSES = "package_rpm"
 PACKAGE_FEED_URIS = "http://127.0.0.1/zybo-z7/yocto_pkg_repo/rpm"
 
 # Packages to install
-IMAGE_INSTALL:append = " gcc"
+IMAGE_INSTALL:append = " packagegroup-core-buildessential"
 IMAGE_INSTALL:append = " devmem2"
 IMAGE_INSTALL:append = " memtester"
 IMAGE_INSTALL:append = " ethtool"
 IMAGE_INSTALL:append = " i2c-tools"
 IMAGE_INSTALL:append = " spidev-test"
 IMAGE_INSTALL:append = " spitools"
+IMAGE_INSTALL:append = " vim"
+
 IMAGE_INSTALL:append = " usbutils"
 IMAGE_INSTALL:append = " v4l-utils"
 IMAGE_INSTALL:append = " opencv"
@@ -33,7 +35,11 @@ IMAGE_INSTALL:append = " pip-odrive"
 
 # Custom apps to install
 IMAGE_INSTALL:append = " machine-vision-server"
+#IMAGE_INSTALL:append = " rgb-led-dance"
 
+# Kernel
+IMAGE_INSTALL:append = " kernel-devsrc"
+#IMAGE_INSTALL:append = " axi2spi-periph-driver"
 
 # Banner output
 python do_display_banner() {
