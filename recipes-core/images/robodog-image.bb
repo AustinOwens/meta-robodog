@@ -27,7 +27,6 @@ IMAGE_INSTALL:append = " i2c-tools"
 IMAGE_INSTALL:append = " spidev-test"
 IMAGE_INSTALL:append = " spitools"
 IMAGE_INSTALL:append = " vim"
-
 IMAGE_INSTALL:append = " usbutils"
 IMAGE_INSTALL:append = " v4l-utils"
 IMAGE_INSTALL:append = " opencv"
@@ -39,7 +38,7 @@ IMAGE_INSTALL:append = " machine-vision-server"
 
 # Kernel
 IMAGE_INSTALL:append = " kernel-devsrc"
-#IMAGE_INSTALL:append = " axi2spi-periph-driver"
+IMAGE_INSTALL:append = " kernel-module-axi2spi-periph"
 
 # Banner output
 python do_display_banner() {
