@@ -47,6 +47,10 @@ static ssize_t axi2spi_periph_read(struct file *file, char __user *buf,
                                    size_t count, loff_t *offset);
 static ssize_t axi2spi_periph_write(struct file *file, const char __user *buf,
                                     size_t count, loff_t *offset);
+void axi2spi_set_spidtr_val(uint32_t value);
+uint32_t axi2spi_get_spidtr_val(void);
+static int axi2spi_periph_uevent(struct device *dev,
+                                 struct kobj_uevent_env *env);
 
 static const struct file_operations axi2spi_periph_fops = {
     .owner = THIS_MODULE,
@@ -82,8 +86,15 @@ struct axi2spi_periph_dev {
   struct device *device;
   struct cdev cdev;
   struct axi2spi_periph_regs __iomem *regs;
-  uint32_t spidtr_val;
 };
+
+uint32_t spidtr_val = 0;
+
+void axi2spi_set_spidtr_val(uint32_t value) { spidtr_val = value; }
+EXPORT_SYMBOL(axi2spi_set_spidtr_val);
+
+uint32_t axi2spi_get_spidtr_val(void) { return spidtr_val; }
+EXPORT_SYMBOL(axi2spi_get_spidtr_val);
 
 static int axi2spi_periph_uevent(struct device *dev,
                                  struct kobj_uevent_env *env) {
@@ -115,12 +126,12 @@ static long axi2spi_periph_ioctl(struct file *file, unsigned int cmd,
 
 static ssize_t axi2spi_periph_read(struct file *file, char __user *buf,
                                    size_t count, loff_t *offset) {
-  struct axi2spi_periph_dev *dev = file->private_data;
+  // struct axi2spi_periph_dev *dev = file->private_data;
   char data[14];
   size_t datalen;
 
-  // Convert dev->spidtr_val to string
-  datalen = snprintf(data, sizeof(data), "0x%x\n", dev->spidtr_val);
+  // Convert spidtr_val to string
+  datalen = snprintf(data, sizeof(data), "0x%x\n", spidtr_val);
 
   // Check if we've already returned the message to user space
   if (*offset >= datalen) {
@@ -146,7 +157,7 @@ static ssize_t axi2spi_periph_read(struct file *file, char __user *buf,
 
 static ssize_t axi2spi_periph_write(struct file *file, const char __user *buf,
                                     size_t count, loff_t *ppos) {
-  struct axi2spi_periph_dev *dev = file->private_data;
+  // struct axi2spi_periph_dev *dev = file->private_data;
   char kbuf[12];
   uint32_t usr_val;
   int ret;
@@ -166,9 +177,9 @@ static ssize_t axi2spi_periph_write(struct file *file, const char __user *buf,
     return ret;
 
   // Update spidtr value for spidtr_irq_handler
-  printk(KERN_INFO "axi2spi_periph: Previous SPIDTR: 0x%x\n", dev->spidtr_val);
-  dev->spidtr_val = usr_val;
-  printk(KERN_INFO "axi2spi_periph: Current SPIDTR: 0x%x\n", dev->spidtr_val);
+  printk(KERN_INFO "axi2spi_periph: Previous SPIDTR: 0x%x\n", spidtr_val);
+  spidtr_val = usr_val;
+  printk(KERN_INFO "axi2spi_periph: Current SPIDTR: 0x%x\n", spidtr_val);
 
   return count;
 }
@@ -177,7 +188,7 @@ static irqreturn_t spidtr_irq_handler(int irq, void *dev_id) {
   struct axi2spi_periph_dev *dev = (struct axi2spi_periph_dev *)dev_id;
 
   /// Write value to DTR
-  iowrite32(dev->spidtr_val, &dev->regs->spidtr);
+  iowrite32(spidtr_val, &dev->regs->spidtr);
 
   // Clear DTR Empty in IPISR. The shifts in IPIER and IPISR are the same.
   iowrite32((1 << IPIER_DTR_EMPTY_SHIFT), &dev->regs->ipisr);
