@@ -33,6 +33,7 @@ IMAGE_INSTALL:append = " opencv"
 IMAGE_INSTALL:append = " pip-odrive"
 
 # Custom apps to install
+IMAGE_INSTALL:append = " bin-gen"
 IMAGE_INSTALL:append = " machine-vision-server"
 #IMAGE_INSTALL:append = " rgb-led-dance"
 

@@ -8,6 +8,19 @@
 #include <linux/platform_device.h>
 #include <linux/uaccess.h>
 
+// SPI Status Register (SPISR) shifts
+#define SPISR_RX_EMPTY_SHIFT 0
+#define SPISR_RX_FULL_SHIFT 1
+#define SPISR_TX_EMPTY_SHIFT 2
+#define SPISR_TX_FULL_SHIFT 3
+#define SPISR_MODF_SHIFT 4
+#define SPISR_SLAVE_MODE_SELECT_SHIFT 5
+#define SPISR_CPOL_CPHA_ERROR_SHIFT 6
+#define SPISR_SLAVE_MODE_ERROR_SHIFT 7
+#define SPISR_MSB_ERROR_SHIFT 8
+#define SPISR_LOOP_BACK_ERROR_SHIFT 9
+#define SPISR_COMMAND_ERROR_SHIFT 10
+
 // SPI Control Register (SPICR) shifts
 #define SPICR_LOOP_SHIFT 0
 #define SPICR_SPE_SHIFT 1
@@ -157,7 +170,8 @@ static ssize_t axi2spi_periph_read(struct file *file, char __user *buf,
 
 static ssize_t axi2spi_periph_write(struct file *file, const char __user *buf,
                                     size_t count, loff_t *ppos) {
-  // struct axi2spi_periph_dev *dev = file->private_data;
+  struct axi2spi_periph_dev *dev = file->private_data;
+  //uint32_t spicr_val;
   char kbuf[12];
   uint32_t usr_val;
   int ret;
@@ -177,21 +191,76 @@ static ssize_t axi2spi_periph_write(struct file *file, const char __user *buf,
     return ret;
 
   // Update spidtr value for spidtr_irq_handler
-  printk(KERN_INFO "axi2spi_periph: Previous SPIDTR: 0x%x\n", spidtr_val);
+  printk(KERN_INFO "axi2spi_periph: Previous spidtr_val: 0x%x\n", spidtr_val);
   spidtr_val = usr_val;
-  printk(KERN_INFO "axi2spi_periph: Current SPIDTR: 0x%x\n", spidtr_val);
+  printk(KERN_INFO "axi2spi_periph: Current spidtr_val: 0x%x\n", spidtr_val);
+
+  // Flush DTR
+  //spicr_val = ioread32(&dev->regs->spicr);
+  //spicr_val |= (1U << SPICR_TX_FIFO_RESET_SHIFT);
+  //iowrite32(spicr_val, &dev->regs->spicr);
+  iowrite32(spidtr_val, &dev->regs->spidtr);
+  //iowrite32((1U << IPIER_DTR_EMPTY_SHIFT), &dev->regs->ipisr);
+
+  //printk(KERN_INFO "axi2spi_periph: YOOO: 0x%x\n", spicr_val);
 
   return count;
 }
 
 static irqreturn_t spidtr_irq_handler(int irq, void *dev_id) {
   struct axi2spi_periph_dev *dev = (struct axi2spi_periph_dev *)dev_id;
+  uint32_t ipisr_val = ioread32(&dev->regs->ipisr);
+  uint32_t spisr_val = ioread32(&dev->regs->spisr);
+  //uint32_t rx_fifo_len;
+  //uint32_t tx_fifo_len;
+  
+  //printk(KERN_INFO "axi2spi_periph (IRQ): BEFORE: ipisr_val = 0x%x | spisr_val = 0x%x\n", ipisr_val, spisr_val);
 
-  /// Write value to DTR
-  iowrite32(spidtr_val, &dev->regs->spidtr);
+  // If DRR FIFO is empty and DRR_NOT_EMPTY IRQ flag is high, clear DRR_NOT_EMPTY IRQ flag
+  //if ((spisr_val & (1U << SPISR_RX_EMPTY_SHIFT)) && (ipisr_val & (1U << IPIER_DRR_NOT_EMPTY_SHIFT))) {
+  //    // Clear DRR_NOT_EMPTY IRQ flag
+  //    iowrite32((1U << IPIER_DRR_NOT_EMPTY_SHIFT), &dev->regs->ipisr);
 
-  // Clear DTR Empty in IPISR. The shifts in IPIER and IPISR are the same.
-  iowrite32((1 << IPIER_DTR_EMPTY_SHIFT), &dev->regs->ipisr);
+  //    // Debug print
+  //    printk(KERN_INFO "axi2spi_periph (IRQ): RX_EMPTY and DRR_NOT_EMPTY\n");
+  //}
+
+  // Push DRR to DTR FIFO
+  uint32_t spidrr_val = ioread32(&dev->regs->spidrr);
+  iowrite32(spidrr_val, &dev->regs->spidtr);
+
+  // Debug print
+  //tx_fifo_len = ioread32(&dev->regs->txfifo) + 1U;
+  //rx_fifo_len = ioread32(&dev->regs->rxfifo) + 1U;
+  //printk(KERN_INFO "axi2spi_periph (IRQ): DRR_NOT_EMPTY, filling DTR with 0x%x. rx_fifo_len = %u | tx_fifo_len = %u\n",
+  //        spidrr_val, rx_fifo_len, tx_fifo_len);
+
+  iowrite32((1U << IPIER_DRR_NOT_EMPTY_SHIFT), &dev->regs->ipisr);
+  printk(KERN_INFO "axi2spi_periph (IRQ): spidrr_val = 0x%x\n", spidrr_val);
+  printk(KERN_INFO "axi2spi_periph (IRQ): ipisr_val  = 0x%x\n", ipisr_val);
+  printk(KERN_INFO "axi2spi_periph (IRQ): spisr_val  = 0x%x\n\n", spisr_val);
+
+  //ipisr_val = ioread32(&dev->regs->ipisr);
+  //spisr_val = ioread32(&dev->regs->spisr);
+
+  //printk(KERN_INFO "axi2spi_periph (IRQ): AFTER: ipisr_val = 0x%x | spisr_val = 0x%x\n", ipisr_val, spisr_val);
+
+  //// If DTR is empty, load DTR with spidtr_val
+  //else if (ipisr_val & (1U << IPIER_DTR_EMPTY_SHIFT)) {
+  //    printk("5\n");
+
+  //    // Initialize first 32 bits of DTR with spidtr_val
+  //    iowrite32(spidtr_val, &dev->regs->spidtr);
+
+  //    // Clear DTR_EMPTY IRQ flag
+  //    iowrite32((1U << IPIER_DTR_EMPTY_SHIFT), &dev->regs->ipisr);
+
+  //    // Debug print
+  //    printk(KERN_INFO "axi2spi_periph (IRQ): DTR_EMPTY, filling DTR with 0x%x\n", spidtr_val);
+  //    spisr_val = ioread32(&dev->regs->spisr);
+  //    printk(KERN_INFO "axi2spi_periph (IRQ): DTR_EMPTY, spisr = 0x%x\n", spisr_val);
+
+  //}
 
   return IRQ_HANDLED;
 }
@@ -254,7 +323,7 @@ static int axi2spi_periph_probe(struct platform_device *pdev) {
   spicr_val = ioread32(&dev->regs->spicr);
   printk(KERN_INFO "axi2spi_periph: Previous SPICR: 0x%x\n", spicr_val);
 
-  spicr_val |= (1 << SPICR_SPE_SHIFT);
+  spicr_val |= (1U << SPICR_SPE_SHIFT);
   iowrite32(spicr_val, &dev->regs->spicr);
   printk(KERN_INFO "axi2spi_periph: Current SPICR: 0x%x\n",
          ioread32(&dev->regs->spicr));
@@ -263,7 +332,8 @@ static int axi2spi_periph_probe(struct platform_device *pdev) {
   ipier_val = ioread32(&dev->regs->ipier);
   printk(KERN_INFO "axi2spi_periph: Previous IPIER: 0x%x\n", ipier_val);
 
-  ipier_val |= (1 << IPIER_DTR_EMPTY_SHIFT);
+  //ipier_val |= (1U << IPIER_DTR_EMPTY_SHIFT);
+  ipier_val |= (1U << IPIER_DRR_NOT_EMPTY_SHIFT);
   iowrite32(ipier_val, &dev->regs->ipier);
   printk(KERN_INFO "axi2spi_periph: Current IPIER: 0x%x\n",
          ioread32(&dev->regs->ipier));
@@ -272,10 +342,17 @@ static int axi2spi_periph_probe(struct platform_device *pdev) {
   dgier_val = ioread32(&dev->regs->dgier);
   printk(KERN_INFO "axi2spi_periph: Previous DGIER: 0x%x\n", dgier_val);
 
-  dgier_val |= (1 << DGIER_GIE_SHIFT);
+  dgier_val |= (1U << DGIER_GIE_SHIFT);
   iowrite32(dgier_val, &dev->regs->dgier);
   printk(KERN_INFO "axi2spi_periph: Current DGIER: 0x%x\n",
          ioread32(&dev->regs->dgier));
+
+  // INITIALIZE FIRST 32 BITS OF DTR WITH SPIDTR_VAL (SPIDTR)
+  //printk(KERN_INFO "axi2spi_periph: Previous SPIDTR: 0x%x\n",
+  //       ioread32(&dev->regs->spidtr));
+  //iowrite32(spidtr_val, &dev->regs->spidtr);
+  //printk(KERN_INFO "axi2spi_periph: Current SPIDTR: 0x%x\n",
+  //       ioread32(&dev->regs->spidtr));
 
   // INITIALIZE CHAR DEVICE
   err = alloc_chrdev_region(&dev->dev_num, 0, 1, "axi2spi_periph");

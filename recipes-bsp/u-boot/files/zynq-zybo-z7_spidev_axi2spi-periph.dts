@@ -256,13 +256,31 @@
 		spi@e0007000 {
 			compatible = "xlnx,zynq-spi-r1p6";
 			reg = <0xe0007000 0x1000>;
-			status = "disabled";
+			status = "okay";
 			interrupt-parent = <0x04>;
 			interrupts = <0x00 0x31 0x04>;
 			clocks = <0x01 0x1a 0x01 0x23>;
 			clock-names = "ref_clk\0pclk";
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
+
+
+			spidev@0x00 {
+			//compatible = "spidev";
+			compatible = "rohm,dh2228fv";
+
+			/* Max SPI clock frequency via Zynq MIO is 50MHz */
+			spi-max-frequency = <50000000>;
+
+			/* slave number - CS */
+			reg = <0>;
+
+			/* Set SPI mode = 0 */
+			spi-cpol = <0>;
+			spi-cpha = <0>;
+ 
+			};
+
 		};
 
 		spi@e000d000 {
